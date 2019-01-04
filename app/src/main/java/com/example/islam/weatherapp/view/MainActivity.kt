@@ -11,6 +11,7 @@ import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import com.example.islam.weatherapp.R
 import kotlinx.android.synthetic.main.activity_main.*
@@ -43,7 +44,6 @@ class MainActivity : AppCompatActivity() {
                     }},{
                     it->Log.e("error",it.cause.toString())
                 })
-        //storageHandler= StorageHandler()
 
         directory=getExternalFilesDir(Environment.DIRECTORY_PICTURES).absolutePath
         images_recycler_view.layoutManager=LinearLayoutManager(this)
@@ -58,6 +58,9 @@ class MainActivity : AppCompatActivity() {
     private fun fetchImagesFromStorage() {
         storageViewModel.getImages(directory).observe(this, Observer {
             it->imageRecyclerViewAdapter.setImageList(it!!)
+            if(it.size>0)
+                no_history_tex_view.visibility= View.GONE
+            Log.e("main activity",it.size.toString())
         })
 //        storageHandler.readFilesFromFolder(directory)
 //                .subscribeOn(Schedulers.io())
@@ -73,10 +76,10 @@ class MainActivity : AppCompatActivity() {
 //                })
     }
 
-//    override fun onResume() {
-//        super.onResume()
-//        fetchImagesFromStorage()
-//    }
+    override fun onResume() {
+        super.onResume()
+        fetchImagesFromStorage()
+    }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
