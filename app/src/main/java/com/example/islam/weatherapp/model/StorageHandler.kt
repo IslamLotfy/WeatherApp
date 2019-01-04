@@ -2,6 +2,7 @@ package com.example.islam.weatherapp.model
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.util.Log
 import io.reactivex.Observable
 import java.io.File
@@ -32,23 +33,22 @@ class StorageHandler {
         }
 
     }
-    fun readFilesFromFolder(folderPath: String):Observable<MutableList<Bitmap>>{
-        val file:File= File(folderPath)
+    fun readFilesFromFolder(folderPath: String):Observable<MutableList<Uri>>{
+        val file= File(folderPath)
         var files:List<File>
-        var bitmapList:MutableList<Bitmap> = mutableListOf()
+        var uriList:MutableList<Uri> = mutableListOf()
         if(file.exists()){
             files = file.listFiles { _, name -> (name.endsWith(".jpg")
                     || name.endsWith(".jpeg")
                     || name.endsWith(".png"))
                     && name.contains("edited")}.toList()
             files.forEach{it->
-                if(BitmapFactory.decodeFile(it.absolutePath) != null)
-                    bitmapList.add(BitmapFactory.decodeFile(it.absolutePath))
+                uriList.add(Uri.fromFile(it))
             }
-            return Observable.fromArray(bitmapList)
+            return Observable.fromArray(uriList)
 
         }
 
-        return Observable.fromArray(bitmapList)
+        return Observable.fromArray(uriList)
     }
 }

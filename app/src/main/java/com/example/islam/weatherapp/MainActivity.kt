@@ -30,34 +30,53 @@ import kotlinx.android.synthetic.main.content_main.*
 
 class MainActivity : AppCompatActivity() {
 
-
+    private lateinit var storageHandler:StorageHandler
+    private lateinit var directory:String
+    private lateinit var imageRecyclerViewAdapter: ImageRecyclerViewAdapter
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
-        val storageHandler = StorageHandler()
-        val directory:String=getExternalFilesDir(Environment.DIRECTORY_PICTURES).absolutePath
-        images_recycler_view.layoutManager=LinearLayoutManager(this)
-
-        storageHandler.readFilesFromFolder(directory)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({
-                    it->Log.e("files",it.size.toString())
-                    if(it.size>0){
-                        images_recycler_view.adapter=ImageRecyclerViewAdapter(it)
-                        no_history_tex_view.visibility= View.GONE
+        RxPermissions(this)
+                .request(Manifest.permission.ACCESS_COARSE_LOCATION
+                        , Manifest.permission.CAMERA
+                        ,Manifest.permission.READ_EXTERNAL_STORAGE)
+                .subscribe { granted ->
+                    if (granted) { // Always true pre-M
+                        fetchImagesFromStorage()
+                    } else {
+                        Toast.makeText(this,"couldn't grant location premission",Toast.LENGTH_SHORT).show()
                     }
-                },{
-                    it->Log.e("error",it.message)
-                })
+                }
+        storageHandler= StorageHandler()
+        directory=getExternalFilesDir(Environment.DIRECTORY_PICTURES).absolutePath
+        images_recycler_view.layoutManager=LinearLayoutManager(this)
+        imageRecyclerViewAdapter= ImageRecyclerViewAdapter()
+        images_recycler_view.adapter=imageRecyclerViewAdapter
         fab.setOnClickListener { view ->
             val intent:Intent=Intent(this,ImageCaptureActivity::class.java)
             startActivity(intent)
         }
     }
 
+    private fun fetchImagesFromStorage() {
+        storageHandler.readFilesFromFolder(directory)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    it->Log.e("files",it.size.toString())
+                    if(it.size>0){
+                        imageRecyclerViewAdapter.setImageList(it)
+                        no_history_tex_view.visibility= View.GONE
+                    }
+                },{
+                    it->Log.e("error",it.message)
+                })    }
 
+    override fun onResume() {
+        super.onResume()
+        fetchImagesFromStorage()
+    }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
