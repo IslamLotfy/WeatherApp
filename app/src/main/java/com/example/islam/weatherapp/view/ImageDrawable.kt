@@ -1,4 +1,4 @@
-package com.example.islam.weatherapp
+package com.example.islam.weatherapp.view
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -10,7 +10,9 @@ import android.text.StaticLayout
 import android.text.TextPaint
 
 class ImageDrawable {
-    companion object {
+    init {
+
+    }
 
 
         fun drawMultilineTextToBitmap(gContext: Context,
@@ -56,5 +58,5 @@ class ImageDrawable {
 
             return bitmap
         }
-    }
+
 }

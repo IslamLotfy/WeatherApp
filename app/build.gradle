@@ -23,6 +23,7 @@ android {
         }
     }
 
+
 }
 
 dependencies {
@@ -51,5 +52,8 @@ dependencies {
     kapt "android.arch.lifecycle:compiler:1.1.1"
     implementation 'com.facebook.android:facebook-share:4.39.0'
     implementation 'com.squareup.picasso:picasso:2.71828'
+    implementation 'com.google.dagger:dagger:2.13'
+    kapt 'com.google.dagger:dagger-compiler:2.13'
+    compileOnly "org.glassfish:javax.annotation:3.1.1"
 
 }

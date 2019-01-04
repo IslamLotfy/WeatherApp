@@ -1,10 +1,11 @@
-package com.example.islam.weatherapp
+package com.example.islam.weatherapp.view
 
 import android.net.Uri
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.example.islam.weatherapp.R
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.image_recycler_view_item.view.*
 
@@ -25,7 +26,7 @@ class ImageRecyclerViewAdapter() : RecyclerView.Adapter<ImageRecyclerViewAdapter
         this.notifyDataSetChanged()
     }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ImageItemViewHolder {
-        return ImageItemViewHolder(LayoutInflater.from(parent?.context).inflate(R.layout.image_recycler_view_item,parent,false))
+        return ImageItemViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.image_recycler_view_item, parent, false))
     }
 
     override fun getItemCount(): Int {

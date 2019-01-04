@@ -1,7 +1,8 @@
-package com.example.islam.weatherapp
+package com.example.islam.weatherapp.view
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
@@ -14,22 +15,18 @@ import android.provider.MediaStore
 import android.support.v4.content.FileProvider
 import android.util.Log
 import android.widget.Toast
-import com.example.islam.weatherapp.ImageDrawable.Companion.drawMultilineTextToBitmap
-import com.example.islam.weatherapp.model.DayWeatherAPIResponse
-import com.example.islam.weatherapp.model.StorageHandler
-import com.example.islam.weatherapp.model.WeatherAPIService
-import com.facebook.share.model.ShareContent
+import com.example.islam.weatherapp.R
+import com.example.islam.weatherapp.model.dataclasses.DayWeatherAPIResponse
+import com.example.islam.weatherapp.viewmodel.StorageViewModel
+import com.example.islam.weatherapp.viewmodel.StorageViewModelFactory
+import com.example.islam.weatherapp.viewmodel.WeatherViewModel
+import com.example.islam.weatherapp.viewmodel.WeatherViewModelFactory
 import com.facebook.share.model.SharePhoto
 import com.facebook.share.model.SharePhotoContent
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.tbruyelle.rxpermissions2.RxPermissions
-import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_image_capture.*
-import kotlinx.android.synthetic.main.content_main.*
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -42,21 +39,21 @@ class ImageCaptureActivity : AppCompatActivity() {
     var mCurrentPhotoPath: String=""
     private val REQUEST_TAKE_PHOTO: Int =1
 
-    private val weatherAPIService by lazy {
-        WeatherAPIService.create()
-    }
 
-    private var disposable: Disposable? = null
     private var latitude:Double = 0.0
     private var longitude:Double = 0.0
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private var dayWeatherAPIResponse:DayWeatherAPIResponse? = null
+    private var dayWeatherAPIResponse: DayWeatherAPIResponse? = null
 
+    private lateinit var weatherViewModel: WeatherViewModel
+
+    private lateinit var storageViewModel: StorageViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_image_capture)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        storageViewModel=ViewModelProviders.of(this, StorageViewModelFactory()).get(StorageViewModel::class.java)
         RxPermissions(this)
                 .request(Manifest.permission.ACCESS_COARSE_LOCATION , Manifest.permission.CAMERA)
                 .subscribe { granted ->
@@ -95,7 +92,9 @@ class ImageCaptureActivity : AppCompatActivity() {
     private fun writeDataOnImage(){
         val bitmapDrawable = image_view.getDrawable()as BitmapDrawable
         val string  = "temp = "+dayWeatherAPIResponse?.main?.temp+"\n"+dayWeatherAPIResponse?.name
-        val bitmapEditedImage:Bitmap=drawMultilineTextToBitmap(this, bitmapDrawable.bitmap,string)
+        Log.e("edit image",string)
+        val imageDrawable= ImageDrawable()
+        val bitmapEditedImage:Bitmap=imageDrawable.drawMultilineTextToBitmap(this, bitmapDrawable.bitmap,string)
         image_view.setImageBitmap(bitmapEditedImage)
         prepareEditedImageToShare(bitmapEditedImage)
         writeEditedImageToStorage(bitmapEditedImage)
@@ -106,27 +105,22 @@ class ImageCaptureActivity : AppCompatActivity() {
         image_share_button.shareContent=shareContent
     }
     private fun writeEditedImageToStorage(bitmap: Bitmap){
-        val storageHandler = StorageHandler()
+        //val storageHandler = StorageHandler()
         val directory:String=getExternalFilesDir(Environment.DIRECTORY_PICTURES).absolutePath
         val imageName:String=SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())+"edited"
         val quality=100
-        val child="edited"
-        Observable.just(storageHandler.writeImageToStorage(bitmap,directory,imageName,quality))
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe()
+        storageViewModel.writeImages(bitmap,directory,imageName,quality)
+//        Observable.just(storageHandler.writeImageToStorage(bitmap,directory,imageName,quality))
+//                .subscribeOn(Schedulers.io())
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe()
     }
     private fun getDayWeatherData(){
-        disposable=weatherAPIService.getTwoDayWeather(latitude,longitude,id="6c35d564f5156b9cd6aa2eba1f1bbb3b")
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({
-                    response->
-                    dayWeatherAPIResponse=response
-                },{
-                    error->
-                    Log.e("erorr",error.message)
-                })
+        weatherViewModel=ViewModelProviders.of(this, WeatherViewModelFactory(latitude, longitude, getString(R.string.weahter_api_app_id))).get(WeatherViewModel::class.java)
+        weatherViewModel.getWeahter().observe(this,android.arch.lifecycle.Observer{
+            it->dayWeatherAPIResponse=it
+            Log.e("response",dayWeatherAPIResponse?.name)
+        })
     }
 
     @SuppressLint("SimpleDateFormat")

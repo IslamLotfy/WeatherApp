@@ -3,5 +3,5 @@
     <string name="action_settings">Settings</string>
     <string name="facebook_app_id">275774899787151</string>
     <string name="no_history_to_show">No History to Show</string>
-
+    <string name="weahter_api_app_id">6c35d564f5156b9cd6aa2eba1f1bbb3b</string>
 </resources>
