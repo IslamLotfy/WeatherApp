@@ -17,8 +17,8 @@ import android.util.Log
 import android.widget.Toast
 import com.example.islam.weatherapp.R
 import com.example.islam.weatherapp.model.dataclasses.DayWeatherAPIResponse
-import com.example.islam.weatherapp.viewmodel.StorageViewModel
-import com.example.islam.weatherapp.viewmodel.StorageViewModelFactory
+import com.example.islam.weatherapp.viewmodel.HistoryViewModel
+import com.example.islam.weatherapp.viewmodel.HistoryViewModelFactory
 import com.example.islam.weatherapp.viewmodel.WeatherViewModel
 import com.example.islam.weatherapp.viewmodel.WeatherViewModelFactory
 import com.facebook.share.model.SharePhoto
@@ -47,13 +47,13 @@ class ImageCaptureActivity : AppCompatActivity() {
 
     private lateinit var weatherViewModel: WeatherViewModel
 
-    private lateinit var storageViewModel: StorageViewModel
+    private lateinit var historyViewModel: HistoryViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_image_capture)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        storageViewModel=ViewModelProviders.of(this, StorageViewModelFactory()).get(StorageViewModel::class.java)
+        historyViewModel=ViewModelProviders.of(this, HistoryViewModelFactory()).get(HistoryViewModel::class.java)
         RxPermissions(this)
                 .request(Manifest.permission.ACCESS_COARSE_LOCATION , Manifest.permission.CAMERA)
                 .subscribe { granted ->
@@ -69,7 +69,6 @@ class ImageCaptureActivity : AppCompatActivity() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        //super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             image_view.setImageURI(photoUri)
             if(dayWeatherAPIResponse != null)
@@ -105,19 +104,14 @@ class ImageCaptureActivity : AppCompatActivity() {
         image_share_button.shareContent=shareContent
     }
     private fun writeEditedImageToStorage(bitmap: Bitmap){
-        //val storageHandler = StorageHandler()
         val directory:String=getExternalFilesDir(Environment.DIRECTORY_PICTURES).absolutePath
         val imageName:String=SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())+"edited"
         val quality=100
-        storageViewModel.writeImages(bitmap,directory,imageName,quality)
-//        Observable.just(storageHandler.writeImageToStorage(bitmap,directory,imageName,quality))
-//                .subscribeOn(Schedulers.io())
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .subscribe()
+        historyViewModel.writeImages(bitmap,directory,imageName,quality)
     }
     private fun getDayWeatherData(){
         weatherViewModel=ViewModelProviders.of(this, WeatherViewModelFactory(latitude, longitude, getString(R.string.weahter_api_app_id))).get(WeatherViewModel::class.java)
-        weatherViewModel.getWeahter().observe(this,android.arch.lifecycle.Observer{
+        weatherViewModel.getWeather().observe(this,android.arch.lifecycle.Observer{
             it->dayWeatherAPIResponse=it
             Log.e("response",dayWeatherAPIResponse?.name)
         })
@@ -146,8 +140,7 @@ class ImageCaptureActivity : AppCompatActivity() {
                 // Create the File where the photo should go
                 val photoFile: File? = try {
                     createImageFile()
-                } catch (ex: IOException) {
-                    // Error occurred while creating the File
+                } catch (ex: IOException) { // Error occurred while creating the File
 
                     null
                 }
@@ -165,5 +158,4 @@ class ImageCaptureActivity : AppCompatActivity() {
             }
         }
     }
-
 }

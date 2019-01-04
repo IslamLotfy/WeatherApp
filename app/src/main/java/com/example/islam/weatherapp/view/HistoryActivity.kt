@@ -16,64 +16,52 @@ import android.widget.Toast
 import com.example.islam.weatherapp.R
 import kotlinx.android.synthetic.main.activity_main.*
 import com.tbruyelle.rxpermissions2.RxPermissions
-import com.example.islam.weatherapp.viewmodel.StorageViewModel
-import com.example.islam.weatherapp.viewmodel.StorageViewModelFactory
+import com.example.islam.weatherapp.viewmodel.HistoryViewModel
+import com.example.islam.weatherapp.viewmodel.HistoryViewModelFactory
 import kotlinx.android.synthetic.main.content_main.*
 
 
-class MainActivity : AppCompatActivity() {
+class HistoryActivity : AppCompatActivity() {
 
-   // private lateinit var storageHandler:StorageHandler
-    private lateinit var storageViewModel: StorageViewModel
-    private lateinit var directory:String
+    private lateinit var historyViewModel: HistoryViewModel
+    private lateinit var directory: String
     private lateinit var imageRecyclerViewAdapter: ImageRecyclerViewAdapter
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
-        storageViewModel=ViewModelProviders.of(this, StorageViewModelFactory()).get(StorageViewModel::class.java)
+        historyViewModel = ViewModelProviders.of(this, HistoryViewModelFactory()).get(HistoryViewModel::class.java)
         RxPermissions(this)
                 .request(Manifest.permission.ACCESS_COARSE_LOCATION
                         , Manifest.permission.CAMERA
-                        ,Manifest.permission.READ_EXTERNAL_STORAGE)
-                .subscribe( { granted ->
+                        , Manifest.permission.READ_EXTERNAL_STORAGE)
+                .subscribe({ granted ->
                     if (granted) { // Always true pre-M
                         fetchImagesFromStorage()
                     } else {
-                        Toast.makeText(this,"couldn't grant location premission",Toast.LENGTH_SHORT).show()
-                    }},{
-                    it->Log.e("error",it.cause.toString())
+                        Toast.makeText(this, "couldn't grant location premission", Toast.LENGTH_SHORT).show()
+                    }
+                }, { it ->
+                    Log.e("error", it.message.toString())
                 })
 
-        directory=getExternalFilesDir(Environment.DIRECTORY_PICTURES).absolutePath
-        images_recycler_view.layoutManager=LinearLayoutManager(this)
-        imageRecyclerViewAdapter= ImageRecyclerViewAdapter()
-        images_recycler_view.adapter=imageRecyclerViewAdapter
+        directory = getExternalFilesDir(Environment.DIRECTORY_PICTURES).absolutePath
+        images_recycler_view.layoutManager = LinearLayoutManager(this)
+        imageRecyclerViewAdapter = ImageRecyclerViewAdapter()
+        images_recycler_view.adapter = imageRecyclerViewAdapter
         fab.setOnClickListener {
-            val intent:Intent=Intent(this, ImageCaptureActivity::class.java)
+            val intent = Intent(this, ImageCaptureActivity::class.java)
             startActivity(intent)
         }
     }
 
     private fun fetchImagesFromStorage() {
-        storageViewModel.getImages(directory).observe(this, Observer {
-            it->imageRecyclerViewAdapter.setImageList(it!!)
-            if(it.size>0)
-                no_history_tex_view.visibility= View.GONE
-            Log.e("main activity",it.size.toString())
+        historyViewModel.getImages(directory).observe(this, Observer { it ->
+            imageRecyclerViewAdapter.setImageList(it!!)
+            if (it.size > 0)
+                no_history_tex_view.visibility = View.GONE
+            Log.e("main activity", it.size.toString())
         })
-//        storageHandler.readFilesFromFolder(directory)
-//                .subscribeOn(Schedulers.io())
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .subscribe({
-//                    it->Log.e("files",it.size.toString())
-//                    if(it.size>0){
-//                        imageRecyclerViewAdapter.setImageList(it)
-//                        no_history_tex_view.visibility= View.GONE
-//                    }
-//                },{
-//                    it->Log.e("error",it.message)
-//                })
     }
 
     override fun onResume() {
@@ -96,6 +84,4 @@ class MainActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-
-
 }
