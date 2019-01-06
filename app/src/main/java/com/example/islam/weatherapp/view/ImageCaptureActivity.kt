@@ -58,7 +58,7 @@ class ImageCaptureActivity : AppCompatActivity() {
                 .request(Manifest.permission.ACCESS_COARSE_LOCATION , Manifest.permission.CAMERA)
                 .subscribe { granted ->
                     if (granted) { // Always true pre-M
-                        obtieneLocalizacion()
+                       getDayWeatherData()
                     } else {
                         Toast.makeText(this,"couldn't grant location premission",Toast.LENGTH_SHORT).show()
                     }
@@ -73,23 +73,24 @@ class ImageCaptureActivity : AppCompatActivity() {
             image_view.setImageURI(photoUri)
             if(dayWeatherAPIResponse != null)
                 writeDataOnImage()
-            else
-                obtieneLocalizacion()
-
+            else {
+                getDayWeatherData()
+                writeDataOnImage()
+            }
         }
     }
-    @SuppressLint("MissingPermission")
-    private fun obtieneLocalizacion(){
-        fusedLocationClient.lastLocation
-                .addOnSuccessListener { location: Location? ->
-                    latitude = location?.latitude!!
-                    longitude = location.longitude
-                    getDayWeatherData()
-                }
-    }
+//    @SuppressLint("MissingPermission")
+//    private fun obtieneLocalizacion(){
+//        fusedLocationClient.lastLocation
+//                .addOnSuccessListener { location: Location? ->
+//                    latitude = location?.latitude!!
+//                    longitude = location.longitude
+//
+//                }
+//    }
 
     private fun writeDataOnImage(){
-        val bitmapDrawable = image_view.getDrawable()as BitmapDrawable
+        val bitmapDrawable = image_view.drawable as BitmapDrawable
         val string  = "temp = "+dayWeatherAPIResponse?.main?.temp+"\n"+dayWeatherAPIResponse?.name
         Log.e("edit image",string)
         val imageDrawable= ImageDrawable()
@@ -110,7 +111,7 @@ class ImageCaptureActivity : AppCompatActivity() {
         historyViewModel.writeImages(bitmap,directory,imageName,quality)
     }
     private fun getDayWeatherData(){
-        weatherViewModel=ViewModelProviders.of(this, WeatherViewModelFactory(latitude, longitude, getString(R.string.weahter_api_app_id))).get(WeatherViewModel::class.java)
+        weatherViewModel=ViewModelProviders.of(this, WeatherViewModelFactory(fusedLocationClient, getString(R.string.weahter_api_app_id))).get(WeatherViewModel::class.java)
         weatherViewModel.getWeather().observe(this,android.arch.lifecycle.Observer{
             it->dayWeatherAPIResponse=it
             Log.e("response",dayWeatherAPIResponse?.name)
